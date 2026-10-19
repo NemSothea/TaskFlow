@@ -45,7 +45,7 @@ Use `/check` to run everything and `/dev` to start the stack.
 - API types in `frontend/src/api/types.ts` mirror the DRF serializers. Update both together.
 - Every HTTP call goes through `frontend/src/api/client.ts`. Never create another axios instance.
 - New backend rules need a pytest. New frontend logic needs a vitest.
-- Commits use Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `build:`).
+- Commits follow `docs/commit-style.md` (Conventional Commits, imperative subject of 72 characters or fewer, a body that explains why). Use `/commit` to draft one.
 
 ## Auth model (do not change without discussion)
 - The access token (5 min) lives in JS memory only.

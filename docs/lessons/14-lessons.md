@@ -5,7 +5,7 @@ Understand how this lesson series was built, so you can do the same for your own
 
 ## Concepts
 - **One commit, one idea.** Each commit adds one layer (settings, auth, tasks, tests…). The diff between two tags is a focused lesson.
-- **Conventional Commits.** `feat(tasks): …`, `test(backend): …`, `docs: …`. The type says what kind of change it is, and the scope says where. A body explains **why**.
+- **Conventional Commits.** `feat(tasks): …`, `test(backend): …`, `docs: …`. The type says what kind of change it is, and the scope says where. A body explains **why**. The full rules, with good and bad examples, are in [`docs/commit-style.md`](../commit-style.md).
 - **Tags as bookmarks.** `lesson-NN` lets students jump to any step with `git checkout`.
 - **Honesty about intermediate states.** When history is reconstructed from a finished project, some steps don't run on their own. Say so, as these lessons do in "Check yourself", instead of pretending.
 - **Docs next to code.** Lessons cite `file:line`, so they stay checkable. If code moves, update the reference.

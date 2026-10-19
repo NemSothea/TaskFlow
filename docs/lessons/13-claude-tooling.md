@@ -12,7 +12,7 @@ Make the repository AI-assistant friendly. Claude Code should learn the project'
 
 ## Files touched
 - `CLAUDE.md`
-- `.claude/commands/check.md`, `.claude/commands/dev.md`
+- `.claude/commands/check.md`, `.claude/commands/dev.md`, `.claude/commands/commit.md` (added after this tag; see `docs/commit-style.md`)
 - `.claude/skills/add-task-field/SKILL.md`
 - `.claude/settings.json`
 
