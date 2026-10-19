@@ -1,4 +1,5 @@
 ---
+model: sonnet
 description: Draft a commit message for the staged changes following docs/commit-style.md
 ---
 

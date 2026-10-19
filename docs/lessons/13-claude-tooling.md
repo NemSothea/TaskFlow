@@ -22,6 +22,22 @@ Make the repository AI-assistant friendly. Claude Code should learn the project'
 - `.claude/commands/check.md`: defines PASS, FAIL and NOT RUN precisely, so the report cannot be "optimistic".
 - `.claude/skills/add-task-field/SKILL.md`: the eight-step path from model to UI to tests. It is the same path lessons 04–11 took.
 
+## Choosing a model per command
+
+Commands and skills can set `model:` in their frontmatter. If you leave it out, they use whatever model your session is running.
+
+| File | `model:` | Why |
+|---|---|---|
+| `.claude/commands/check.md` | `haiku` | Mechanical: run commands, fill a table. Fast and cheap. |
+| `.claude/commands/dev.md` | `haiku` | Mechanical: start services, print URLs. |
+| `.claude/commands/commit.md` | `sonnet` | Must understand a diff and explain *why*, but doesn't need deep reasoning. |
+| `.claude/skills/add-task-field/SKILL.md` | *(none)* | A multi-file change including a migration. Use the strongest model the session already has. |
+
+Rules of thumb:
+- **Use aliases** (`haiku`, `sonnet`, `opus`), not full IDs like `claude-sonnet-5-5`. Aliases follow the newest version, while full IDs break when a model is retired.
+- **Pin a model only when the task is clearly simpler** than your usual work. When in doubt, leave it out.
+- **Shared repos run on different accounts and providers.** Inheriting the session's model is the safest default for anything important.
+
 ## Run it
 ```bash
 git checkout lesson-13

@@ -1,4 +1,5 @@
 ---
+model: haiku
 description: Start Postgres, the Django API and the Vite dev server
 ---
 

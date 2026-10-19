@@ -1,4 +1,5 @@
 ---
+model: haiku
 description: Run every backend and frontend check and report PASS / FAIL / NOT RUN
 ---
 
