@@ -9,7 +9,7 @@ git diff lesson-02 lesson-03    # exactly what changed
 git switch main                 # back to the finished project
 ```
 
-> **Important:** the history is a teaching narrative. The finished project was split into commits by layer. Some intermediate tags do not run on their own: a file may import something that only arrives in a later lesson. Each lesson's **Check yourself** section says what works at that tag. Only `main` (lesson 14) is guaranteed to pass every check.
+> **Important:** the history is a teaching narrative. The finished project was split into commits by layer. Some intermediate tags do not run on their own: a file may import something that only arrives in a later lesson. Each lesson's **Check yourself** section says what works at that tag. Only `main` (the latest lesson) is guaranteed to pass every check.
 
 | # | Tag | Title | What you learn |
 |---|-----|-------|----------------|
@@ -27,6 +27,7 @@ git switch main                 # back to the finished project
 | 12 | `lesson-12` | [README](12-readme.md) | documenting setup, env vars, API, security |
 | 13 | `lesson-13` | [Claude Code tooling](13-claude-tooling.md) | CLAUDE.md, slash commands, skills, permissions |
 | 14 | `lesson-14` | [This lesson series](14-lessons.md) | writing teachable history |
+| 15 | `lesson-15` | [Writing good prompts](15-writing-prompts.md) | prompt anatomy, pitfalls, tips, techniques, real before/after prompts |
 
 ## Prerequisites
 Docker, [uv](https://docs.astral.sh/uv/), Node 20.19+ (or 22.12+), and Git. Basic Python and React knowledge.

@@ -26,7 +26,7 @@ git diff --stat lesson-04 lesson-05
 ```
 
 ## Check yourself
-`git log --oneline` lists 14 commits, `git tag` lists `lesson-01` to `lesson-14`, and `/check` on `main` is all PASS.
+At tag `lesson-14`, `git log --oneline` lists 14 commits and `git tag` includes `lesson-01` to `lesson-14`. `/check` on `main` is all PASS.
 
 ## Exercise
 Pick one feature you built recently. Split it into 3–5 commits that each tell one part of the story, and write a body for each one that explains why, not what.

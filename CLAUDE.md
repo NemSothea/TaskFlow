@@ -17,6 +17,7 @@ frontend/src/features/ auth/ and tasks/ feature folders (pages + components + ho
 frontend/src/i18n/     en.ts (source of truth) and km.ts (typed against en)
 frontend/src/preferences/  theme + language, Ant Design ConfigProvider
 docs/lessons/          step-by-step lesson series, one per git tag lesson-NN
+docs/prompts/          real prompts used to build this project (see lesson 15)
 ```
 
 ## Commands
