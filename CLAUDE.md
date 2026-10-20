@@ -1,49 +1,33 @@
 # TaskFlow
 
 Full-stack task manager. Django REST API + React SPA, served from one origin.
+Monorepo: each package has its own CLAUDE.md with stack, commands and conventions.
 
-## Stack
-- Backend (`backend/`): Python 3.13 (uv), Django 6.1, DRF 3.18, SimpleJWT 5.5, django-filter, PostgreSQL 17
-- Frontend (`frontend/`): React 19, TypeScript 7, Vite 8, Ant Design 6, Tailwind CSS 4, Axios, React Router 7, i18next
+- `backend/CLAUDE.md`: Python 3.13 (uv), Django 6.1, DRF 3.18, SimpleJWT 5.5, PostgreSQL 17
+- `frontend/CLAUDE.md`: React 19, TypeScript 7, Vite 8, Ant Design 6, Tailwind CSS 4, i18next
 - Dev database: `docker-compose.yml` → Postgres on host port **5433**
 
 ## Folder map
 ```
-backend/config/        settings (all values from env), root urls
-backend/accounts/      custom User, register/login/refresh/logout/me, refresh-cookie helpers
-backend/tasks/         Task model, serializer, owner-scoped viewset, pagination
-frontend/src/api/      axios client (token refresh), typed services, DRF error parsing
-frontend/src/features/ auth/ and tasks/ feature folders (pages + components + hooks)
-frontend/src/i18n/     en.ts (source of truth) and km.ts (typed against en)
-frontend/src/preferences/  theme + language, Ant Design ConfigProvider
+backend/               Django API (see backend/CLAUDE.md)
+frontend/              React SPA (see frontend/CLAUDE.md)
+scripts/               dev.sh, check.sh, check-backend.sh, check-frontend.sh (run from any cwd)
+docs/features/         one spec per feature: endpoints, files, tests
 docs/lessons/          step-by-step lesson series, one per git tag lesson-NN
 docs/prompts/          real prompts used to build this project (see lesson 15)
+.claude/               commands, skills, agents, hooks, settings.json
 ```
 
 ## Commands
 ```bash
-docker compose up -d --wait                       # database
-cd backend && uv run python manage.py runserver 127.0.0.1:8000
-cd frontend && npm run dev                        # http://localhost:5173, proxies /api
-
-# backend checks (run from backend/)
-uv run pytest
-uv run ruff check . && uv run ruff format --check .
-uv run python manage.py check
-uv run python manage.py makemigrations --check --dry-run
-
-# frontend checks (run from frontend/)
-npm run typecheck && npm run lint && npm test && npm run build
+scripts/dev.sh        # db + API on :8000 + Vite on :5173 (needs backend/.env)
+scripts/check.sh      # every backend and frontend check; non-zero exit on failure
 ```
-Use `/check` to run everything and `/dev` to start the stack.
+Slash commands: `/dev`, `/check`, `/review` (diff vs these rules), `/commit`.
+Hooks: `.env` writes are blocked; edited `backend/**/*.py` files are auto-formatted with ruff.
 
-## Conventions
-- Ant Design owns component styling and colors (theme tokens). Tailwind is for layout and spacing only. Tailwind preflight is disabled on purpose.
-- Every UI string goes in **both** `frontend/src/i18n/locales/en.ts` and `km.ts`. `km.ts` is typed against `en.ts`, so a missing key fails `tsc`.
-- Task querysets are always `Task.objects.filter(owner=request.user)`. Another user's object returns 404, not 403.
-- `owner` is never client-writable. Set it in `perform_create`.
+## Cross-package rules
 - API types in `frontend/src/api/types.ts` mirror the DRF serializers. Update both together.
-- Every HTTP call goes through `frontend/src/api/client.ts`. Never create another axios instance.
 - New backend rules need a pytest. New frontend logic needs a vitest.
 - Commits follow `docs/commit-style.md` (Conventional Commits, imperative subject of 72 characters or fewer, a body that explains why). Use `/commit` to draft one.
 
