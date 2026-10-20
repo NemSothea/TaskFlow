@@ -29,6 +29,10 @@ Register, log in, stay logged in across reloads, and log out, without ever expos
 - `backend/accounts/tests/test_auth.py`: register (no password echoed, weak password, duplicate email case-insensitive), login (httpOnly cookie, wrong password 401, throttling), refresh (CSRF required, rotation + blacklist, missing cookie 401), logout (blacklists), me (requires auth, returns the current user).
 - `frontend/src/api/client.test.ts`: bearer header, refresh once and retry, shared concurrent refresh, session-expiry signal, no refresh for auth endpoints.
 - `frontend/src/features/auth/RouteGuards.test.tsx`: redirect anonymous users, allow authenticated users, bounce signed-in users from login, show a spinner while loading.
+- `frontend/src/features/auth/AuthProvider.test.tsx`: session restore, signed out without a cookie, expiry when refresh fails, logout forgets the token.
+- `frontend/src/features/auth/LoginPage.test.tsx`: required fields, credentials sent, return to the original page, no open redirect, 401/429/500/network messages, the registration notice, axe.
+- `frontend/src/features/auth/RegisterPage.test.tsx`: password mismatch, invalid email, server field errors on the right field, confirmation not sent, rate limiting, axe.
+- `frontend/e2e/journeys.spec.ts`: sign up, then sign in, reload (session restored from the cookie), log out; no tokens in web storage; return to the original page after login.
 
 ## Rules
 The auth model is locked. See "Auth model" in `CLAUDE.md`. Do not change it without discussion.

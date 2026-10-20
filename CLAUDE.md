@@ -11,7 +11,7 @@ Monorepo: each package has its own CLAUDE.md with stack, commands and convention
 ```
 backend/               Django API (see backend/CLAUDE.md)
 frontend/              React SPA (see frontend/CLAUDE.md)
-scripts/               dev.sh, check.sh, check-backend.sh, check-frontend.sh (run from any cwd)
+scripts/               dev.sh, check.sh, check-backend.sh, check-frontend.sh, e2e.sh (run from any cwd)
 docs/features/         one spec per feature: endpoints, files, tests
 docs/lessons/          step-by-step lesson series, one per git tag lesson-NN
 docs/prompts/          real prompts used to build this project (see lesson 15)
@@ -22,13 +22,14 @@ docs/prompts/          real prompts used to build this project (see lesson 15)
 ```bash
 scripts/dev.sh        # db + API on :8000 + Vite on :5173 (needs backend/.env)
 scripts/check.sh      # every backend and frontend check; non-zero exit on failure
+scripts/e2e.sh        # Playwright journeys against a real stack on :8001/:5174 (needs Docker)
 ```
 Slash commands: `/dev`, `/check`, `/review` (diff vs these rules), `/commit`.
 Hooks: `.env` writes are blocked; edited `backend/**/*.py` files are auto-formatted with ruff.
 
 ## Cross-package rules
 - API types in `frontend/src/api/types.ts` mirror the DRF serializers. Update both together.
-- New backend rules need a pytest. New frontend logic needs a vitest.
+- New backend rules need a pytest. New frontend logic needs a vitest. What to test: `backend-tests` and `frontend-tests` skills.
 - Commits follow `docs/commit-style.md` (Conventional Commits, imperative subject of 72 characters or fewer, a body that explains why). Use `/commit` to draft one.
 
 ## Auth model (do not change without discussion)

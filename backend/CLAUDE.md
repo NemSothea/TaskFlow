@@ -25,5 +25,5 @@ All at once: `../scripts/check-backend.sh`. Tests need the database (`docker com
 - Task querysets are always `Task.objects.filter(owner=request.user)`. Another user's object returns 404, not 403.
 - `owner` is never client-writable. Set it in `perform_create`.
 - Serializer changes must be mirrored in `frontend/src/api/types.ts`.
-- New backend rules need a pytest.
+- New backend rules need a pytest. Follow the `backend-tests` skill.
 - Never edit an applied migration. Create a new one, and read it before applying.

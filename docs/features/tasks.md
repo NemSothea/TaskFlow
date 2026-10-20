@@ -35,6 +35,9 @@ List query parameters:
 - `backend/tasks/tests/test_models.py`: database rejects an empty title and an unknown status; tasks are deleted with their owner.
 - `frontend/src/features/tasks/query.test.ts`: URL param defaults, invalid values dropped, round trip, `hasActiveFilters`.
 - `frontend/src/features/tasks/TaskFormModal.test.tsx`: title validation, trimmed submit payload with defaults.
+- `frontend/src/features/tasks/TasksPage.test.tsx`: list and summary, URL filters sent to the API, invalid URL values ignored, empty and no-match states, server and network errors with retry, create/edit/complete/delete flows, page step-back after the last delete, search syncs the URL, axe.
+- `frontend/src/components/PreferenceControls.test.tsx`: Khmer switch updates the UI and persists, dark mode toggles and persists, axe.
+- `frontend/e2e/journeys.spec.ts`: full task lifecycle, ownership between two users, URL filters survive a reload, Khmer persists, mobile cards with no horizontal scroll.
 
 ## Extending
 - New field: use the `add-task-field` skill.

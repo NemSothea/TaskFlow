@@ -17,7 +17,9 @@
       "Bash(scripts/check-backend.sh)",
       "Bash(scripts/check-frontend.sh)",
       "Bash(scripts/dev.sh)",
-      "Bash(bash scripts/check.sh)"
+      "Bash(bash scripts/check.sh)",
+      "Bash(scripts/e2e.sh)",
+      "Bash(npm run e2e:*)"
     ]
   },
   "hooks": {

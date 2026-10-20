@@ -10,12 +10,15 @@ src/features/     auth/ and tasks/ feature folders (pages + components + hooks)
 src/components/   layout, error/empty/loading states
 src/i18n/         en.ts (source of truth) and km.ts (typed against en)
 src/preferences/  theme + language, Ant Design ConfigProvider
+src/test/         setup, renderWithProviders, mockApi, expectNoA11yViolations, LocationProbe
+e2e/              Playwright journeys (real browser + real API)
 ```
 
 ## Commands (run from frontend/)
 ```bash
 npm run dev          # http://localhost:5173, proxies /api to :8000
 npm run typecheck && npm run lint && npm test && npm run build
+npm run e2e          # Playwright; prefer ../scripts/e2e.sh, which prepares the database
 ```
 All at once: `../scripts/check-frontend.sh`.
 
@@ -25,4 +28,4 @@ All at once: `../scripts/check-frontend.sh`.
 - API types in `src/api/types.ts` mirror the DRF serializers. Update both together.
 - Every HTTP call goes through `src/api/client.ts`. Never create another axios instance.
 - Tokens never go in `localStorage` or `sessionStorage`. The access token stays in memory.
-- New frontend logic needs a vitest.
+- New frontend logic needs a vitest. Follow the `frontend-tests` skill: test what the user sees and does.
