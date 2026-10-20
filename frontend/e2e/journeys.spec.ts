@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { createTask, signUpAndLogIn } from './helpers'
+import { createTask, login, register, signUpAndLogIn, uniqueUser } from './helpers'
 
 test.describe('task journeys', () => {
   test('a new user signs up, manages a task, survives a reload, and logs out', async ({ page }) => {
@@ -69,6 +69,16 @@ test.describe('task journeys', () => {
     await page.reload()
     await expect(page.getByText('Pay rent')).toBeVisible()
     await expect(page.getByText('Water plants')).toHaveCount(0)
+  })
+
+  test('a signed-out visitor is sent to login and returned afterwards', async ({ page }) => {
+    const user = uniqueUser()
+    await register(page, user)
+
+    await page.goto('/?search=anything')
+    await expect(page).toHaveURL(/\/login$/)
+    await login(page, user.username)
+    await expect(page).toHaveURL(/\/\?search=anything$/)
   })
 
   test('the language choice applies everywhere and persists', async ({ page }) => {

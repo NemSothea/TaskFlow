@@ -8,6 +8,7 @@ import { parseApiError } from '../../api/errors'
 import type { LoginInput } from '../../api/types'
 import { AuthLayout } from './AuthLayout'
 import { useAuth } from './context'
+import { safeRedirectTarget } from './redirect'
 
 interface LocationState {
   from?: string
@@ -28,9 +29,7 @@ export function LoginPage() {
     setError(null)
     try {
       await login(values)
-      // Only follow same-app paths to avoid open redirects.
-      const target = state.from?.startsWith('/') && !state.from.startsWith('//') ? state.from : '/'
-      navigate(target, { replace: true })
+      navigate(safeRedirectTarget(state.from), { replace: true })
     } catch (err) {
       const { status } = parseApiError(err)
       setError(

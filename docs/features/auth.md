@@ -19,7 +19,7 @@ Register, log in, stay logged in across reloads, and log out, without ever expos
 - **Registration**: email is normalized, lowercased and must be unique (case-insensitive). Django's password validators run against the would-be user. The password is write-only.
 - **Client refresh**: on a 401, the response interceptor calls `refreshAccessToken()` once and retries the request. Concurrent callers share one in-flight refresh. Auth endpoints pass `skipAuthRefresh`. If the refresh fails, `onSessionExpired` fires.
 - **Session restore**: on load, `AuthProvider` calls `refreshAccessToken()` then `fetchMe()`. Status is `loading`, then `authenticated` or `anonymous`.
-- **Routing**: `ProtectedRoute` sends anonymous users to `/login` and keeps the original path in `state.from`. `GuestRoute` sends signed-in users away from `/login` and `/register` to `/`.
+- **Routing**: `ProtectedRoute` sends anonymous users to `/login` and keeps the original path in `state.from`. `GuestRoute` sends signed-in users away from `/login` and `/register`, back to `state.from` or `/`. Both it and `LoginPage` use `safeRedirectTarget` (`redirect.ts`), which only allows same-app paths.
 
 ## Files
 - Backend: `backend/accounts/` (`models.py` custom `User` with unique email, `serializers.py`, `views.py`, `cookies.py`, `urls.py`), and the `SIMPLE_JWT`, `REFRESH_COOKIE_*` and throttle settings in `backend/config/settings.py`.

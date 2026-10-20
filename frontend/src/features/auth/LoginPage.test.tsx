@@ -60,6 +60,19 @@ describe('LoginPage', () => {
     expect(JSON.parse(login!.data)).toEqual({ username: 'alice', password: 'S3cure-pass-123' })
   })
 
+  it('returns a visitor to the protected page they opened before signing in', async () => {
+    // Regression: GuestRoute used to redirect to "/" the moment login succeeded,
+    // overriding LoginPage's redirect to state.from.
+    mock.onPost('/auth/login/').reply(200, { access: 'access-token', user: USER })
+    renderAuthApp('/?status=done&search=milk')
+
+    await waitFor(() => expect(location()).toHaveTextContent(/^\/login$/))
+    await fillAndSubmit()
+
+    expect(await screen.findByText('signed-in app')).toBeInTheDocument()
+    await waitFor(() => expect(location()).toHaveTextContent(/^\/\?status=done&search=milk$/))
+  })
+
   it('never redirects to another site after login', async () => {
     mock.onPost('/auth/login/').reply(200, { access: 'access-token', user: USER })
     renderAuthApp({ pathname: '/login', state: { from: '//evil.example/phish' } })
