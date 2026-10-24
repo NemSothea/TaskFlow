@@ -1,9 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// E2E runs its own API (:8001) and Vite (:5174) so it never collides with `scripts/dev.sh`.
-// Start it through `scripts/e2e.sh`, which brings up Postgres and applies migrations first.
+// E2E runs its own API (:8001), Vite (:5174) and database (taskflow_e2e) so it never
+// collides with `scripts/dev.sh` or leaves test users in the dev database.
+// Start it through `scripts/e2e.sh`, which creates that database and applies migrations first.
 const API_PORT = 8001
 const WEB_PORT = 5174
+const E2E_DATABASE_URL =
+  process.env.E2E_DATABASE_URL ?? 'postgres://taskflow:taskflow_dev_password@127.0.0.1:5433/taskflow_e2e'
 
 export default defineConfig({
   testDir: './e2e',
@@ -31,6 +34,7 @@ export default defineConfig({
         AUTH_THROTTLE_RATE: '1000/min',
         REFRESH_THROTTLE_RATE: '1000/min',
         SECURE_COOKIES: 'False',
+        DATABASE_URL: E2E_DATABASE_URL,
         CSRF_TRUSTED_ORIGINS: `http://localhost:${WEB_PORT}`,
       },
     },
