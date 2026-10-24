@@ -5,7 +5,7 @@ Full-stack task management app: a React + TypeScript SPA on top of a Django REST
 - **Frontend:** React 19, TypeScript 7, Vite 8, Ant Design 6, Tailwind CSS 4 (layout only), Axios, React Router 7, i18next
 - **Backend:** Django 6.1, Django REST Framework 3.18, SimpleJWT 5.5, django-filter
 - **Database:** PostgreSQL 17 (Docker for local development)
-- **Features:** register/login, per-user task CRUD, search/filter/sort/pagination, task summary, Khmer and English, light and dark themes, responsive layout
+- **Features:** register/login, per-user task CRUD, search/filter/sort/pagination, task summary and dashboard charts, Khmer and English, light and dark themes, responsive layout
 
 ## Project layout
 
@@ -25,30 +25,61 @@ taskflow-fullstack/
     └── preferences/          # theme + language, Ant Design ConfigProvider
 ```
 
+Data model: see [docs/erd.md](docs/erd.md) for the ERD and how the schema is meant to grow.
+
 ## Setup
 
-Prerequisites: Docker, [uv](https://docs.astral.sh/uv/), and Node 20.19+ (or 22.12+).
+Prerequisites: Docker (running), [uv](https://docs.astral.sh/uv/), and Node 20.19+ (or 22.12+).
 
 ```bash
-# 1. Database (host port 5433 so it doesn't clash with a local Postgres)
-docker compose up -d --wait
-
-# 2. Backend
-cd backend
-cp .env.example .env
-# Set DJANGO_SECRET_KEY in .env:
-uv run python -c "from django.core.management.utils import get_random_secret_key as g; print(g())"
-uv sync
-uv run python manage.py migrate
-uv run python manage.py runserver 127.0.0.1:8000
-
-# 3. Frontend (new terminal)
-cd frontend
-npm install
-npm run dev        # http://localhost:5173 (proxies /api to :8000)
+scripts/dev.sh
 ```
 
-Then open http://localhost:5173 and create an account.
+That one command:
+1. installs backend dependencies,
+2. creates `backend/.env` with a generated `DJANGO_SECRET_KEY` on first run,
+3. starts Postgres in Docker on host port **5433**,
+4. applies migrations and creates the demo user,
+5. installs frontend dependencies on first run,
+6. starts the API on :8000 and the app on :5173. Ctrl-C stops both.
+
+Then open http://localhost:5173 and sign in:
+
+| Account | Username | Password | Where |
+|---|---|---|---|
+| Demo user, 12 sample tasks | `demo` | `taskflow-demo-123` | the app |
+| Admin | create it (below) | your choice | http://127.0.0.1:8000/admin/ |
+
+Create an admin account (works from any terminal, including Claude Code's `!` prefix):
+
+```bash
+cd backend
+DJANGO_SUPERUSER_PASSWORD='pick-a-password' uv run python manage.py createsuperuser --noinput --username admin --email admin@example.com
+```
+
+Notes:
+- `seed_demo` runs on every `dev.sh` start. It resets the demo password and adds sample tasks only when the demo user has none (`--reset` replaces them). It refuses to run unless `DEBUG=True`, because its password is public.
+- The backend refuses to start with the placeholder or any secret key shorter than 32 characters.
+- If port 5433 is taken, set `POSTGRES_PORT` before `docker compose up` and change `DATABASE_URL` in `backend/.env` to match.
+
+<details>
+<summary>Manual setup (without dev.sh)</summary>
+
+```bash
+docker compose up -d --wait
+cd backend
+cp .env.example .env    # then replace DJANGO_SECRET_KEY with a generated value
+uv sync
+uv run python manage.py migrate
+uv run python manage.py seed_demo
+uv run python manage.py runserver 127.0.0.1:8000
+
+# new terminal
+cd frontend
+npm install
+npm run dev
+```
+</details>
 
 ## Environment variables
 
@@ -56,7 +87,7 @@ Then open http://localhost:5173 and create an account.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DJANGO_SECRET_KEY` | *(required)* | Signing key for sessions/JWTs. No default on purpose. |
+| `DJANGO_SECRET_KEY` | *(required)* | Signing key for sessions/JWTs. At least 32 characters; the `change-me` placeholder is rejected. `dev.sh` generates one. |
 | `DEBUG` | `False` | Only enable locally. |
 | `ALLOWED_HOSTS` | empty | Comma-separated hostnames. |
 | `DATABASE_URL` | *(required)* | `postgres://user:pass@host:port/db` |
@@ -87,6 +118,7 @@ All endpoints are under `/api/v1/`. Everything except register/login/refresh/log
 | GET/POST | `tasks/` | List (paginated) / create. Query: `page`, `page_size` (≤100), `search`, `status`, `priority`, `ordering` |
 | GET/PUT/PATCH/DELETE | `tasks/{id}/` | Own tasks only; anything else returns 404 |
 | GET | `tasks/summary/` | `{todo, in_progress, done, total}` |
+| GET | `tasks/stats/` | Dashboard charts: status counts per priority, tasks created per week (last 8), `overdue`, `due_this_week` |
 
 Errors use DRF's standard shape: `{"detail": "..."}` or `{"field": ["..."]}`.
 
@@ -102,22 +134,27 @@ Errors use DRF's standard shape: `{"detail": "..."}` or `{"field": ["..."]}`.
 ## Checks
 
 ```bash
-# backend
-cd backend
-uv run pytest
-uv run ruff check . && uv run ruff format --check .
-uv run python manage.py check
-uv run python manage.py makemigrations --check --dry-run
-
-# frontend
-cd frontend
-npm run typecheck && npm run lint && npm test && npm run build
+scripts/check.sh   # backend: pytest, ruff, Django checks, migration check; frontend: typecheck, lint, vitest, build
+scripts/e2e.sh     # Playwright journeys in a real browser against a real API
 ```
 
-## Production notes
+- E2E uses its own `taskflow_e2e` database, so it never adds users to your dev data.
+- CI (`.github/workflows/ci.yml`) runs the backend checks, frontend checks and E2E on every push to `main` and every pull request.
 
-- Serve `frontend/dist` and proxy `/api` to Django (gunicorn) on the same domain behind HTTPS.
+## Known limitations
+
+Be clear about what this project is: a well-tested single-user task manager for learning and local use. It is not production-ready yet.
+
+- **No deployment setup.** There is no Dockerfile, no `gunicorn` dependency and no reverse-proxy config. The production checklist below is guidance, not something you can run as is.
+- **Accounts:** no password reset, password change, email verification or account deletion in the app. Admins can do these in Django admin.
+- **Tasks:** each task belongs to one user. No sharing, projects, tags, comments, attachments or task detail page. See [docs/erd.md](docs/erd.md) for how the schema would grow.
+- **Throttling** uses the per-process default cache. It is only accurate with one server process.
+- **No monitoring:** no error tracking, metrics or structured logs.
+
+## Before deploying (checklist)
+
+- Add a WSGI server (for example `gunicorn`), serve `frontend/dist` and proxy `/api` to Django on the same domain behind HTTPS.
 - Set `DEBUG=False`, `SECURE_COOKIES=True`, `SECURE_SSL_REDIRECT=True`, `SECURE_HSTS_SECONDS`, `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
-- Run `uv run python manage.py check --deploy`.
-- Use a shared cache (for example Redis) for throttling when running more than one process. The default cache is per-process.
+- Run `uv run python manage.py check --deploy` and fix every warning.
+- Use a shared cache (for example Redis) for throttling when running more than one process.
 - Schedule `uv run python manage.py flushexpiredtokens` to prune the token blacklist.

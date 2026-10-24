@@ -24,6 +24,8 @@ All at once: `../scripts/check-frontend.sh`.
 
 ## Conventions
 - Ant Design owns component styling and colors (theme tokens). Tailwind is for layout and spacing only. Tailwind preflight is disabled on purpose.
+- Visual rules (colors, type scale, motion, charts) live in `../docs/design-system.md`. Read it before any UI change, and update it when a design rule changes.
+- Animation uses Motion (`motion`) through `LazyMotion strict`: import `* as m from 'motion/react-m'`, never `motion.*` components. Timings come from `src/lib/motion.ts`. `MotionConfig reducedMotion="user"` honours the OS setting. Animate only changes the user should notice (entering, leaving, a count changing), never data-table rows.
 - Every UI string goes in **both** `src/i18n/locales/en.ts` and `km.ts`. `km.ts` is typed against `en.ts`, so a missing key fails `tsc`.
 - API types in `src/api/types.ts` mirror the DRF serializers. Update both together.
 - Every HTTP call goes through `src/api/client.ts`. Never create another axios instance.

@@ -12,7 +12,9 @@ Monorepo: each package has its own CLAUDE.md with stack, commands and convention
 backend/               Django API (see backend/CLAUDE.md)
 frontend/              React SPA (see frontend/CLAUDE.md)
 scripts/               dev.sh, check.sh, check-backend.sh, check-frontend.sh, e2e.sh (run from any cwd)
-docs/features/         one spec per feature: endpoints, files, tests
+docs/erd.md            ERD of the database plus the plan for growing the schema
+docs/features/         one spec per feature: endpoints, files, tests (dashboard.md: hero, cards, charts)
+docs/design-system.md  visual rules: colors, type, motion, charts, UI checklist
 docs/lessons/          step-by-step lesson series, one per git tag lesson-NN
 docs/prompts/          real prompts used to build this project (see lesson 15)
 .claude/               commands, skills, agents, hooks, settings.json
@@ -20,15 +22,17 @@ docs/prompts/          real prompts used to build this project (see lesson 15)
 
 ## Commands
 ```bash
-scripts/dev.sh        # db + API on :8000 + Vite on :5173 (needs backend/.env)
+scripts/dev.sh        # creates backend/.env if missing, db, migrate, seed_demo, API :8000, Vite :5173
 scripts/check.sh      # every backend and frontend check; non-zero exit on failure
-scripts/e2e.sh        # Playwright journeys against a real stack on :8001/:5174 (needs Docker)
+scripts/e2e.sh        # Playwright journeys on :8001/:5174 with a separate taskflow_e2e database (needs Docker)
 ```
 Slash commands: `/dev`, `/check`, `/review` (diff vs these rules), `/commit`.
 Hooks: `.env` writes are blocked; edited `backend/**/*.py` files are auto-formatted with ruff.
 
 ## Cross-package rules
+- Plan first: a multi-file feature gets its spec in `docs/features/<feature>.md` (goal, API, files, tests, open work), agreed with the user before coding.
 - API types in `frontend/src/api/types.ts` mirror the DRF serializers. Update both together.
+- `docs/erd.md` mirrors the models. Update it in the same change as any model or migration.
 - New backend rules need a pytest. New frontend logic needs a vitest. What to test: `backend-tests` and `frontend-tests` skills.
 - Commits follow `docs/commit-style.md` (Conventional Commits, imperative subject of 72 characters or fewer, a body that explains why). Use `/commit` to draft one.
 

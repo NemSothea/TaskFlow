@@ -28,6 +28,7 @@ git switch main                 # back to the finished project
 | 13 | `lesson-13` | [Claude Code tooling](13-claude-tooling.md) | CLAUDE.md, slash commands, skills, permissions |
 | 14 | `lesson-14` | [This lesson series](14-lessons.md) | writing teachable history |
 | 15 | `lesson-15` | [Writing good prompts](15-writing-prompts.md) | prompt anatomy, pitfalls, tips, techniques, real before/after prompts |
+| 16 | not tagged yet | [The TaskFlow setup](16-setup-overview.md) ([slides](https://claude.ai/artifact/BC4wm3pG1XxW3VDBxqxG2u)) | the stack map, motion.dev / ui-ux-pro-max / 21st.dev, Claude commands, skills, agents, hooks |
 
 ## Prerequisites
 Docker, [uv](https://docs.astral.sh/uv/), Node 20.19+ (or 22.12+), and Git. Basic Python and React knowledge.
