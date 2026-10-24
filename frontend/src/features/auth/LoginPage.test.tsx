@@ -45,7 +45,8 @@ describe('LoginPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Sign in' }))
 
-    expect(await screen.findAllByText('This field is required.')).toHaveLength(2)
+    // findAllBy resolves on the first match; Ant Design validates fields asynchronously.
+    await waitFor(() => expect(screen.getAllByText('This field is required.')).toHaveLength(2))
     expect(mock.history.post.some((r) => r.url === '/auth/login/')).toBe(false)
   })
 

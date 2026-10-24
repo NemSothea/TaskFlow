@@ -57,9 +57,17 @@ export function LoginPage() {
       title={t('auth.loginTitle')}
       subtitle={t('auth.loginSubtitle')}
       footer={
-        <Typography.Text>
-          {t('auth.noAccount')} <Link to="/register">{t('auth.register')}</Link>
-        </Typography.Text>
+        <>
+          <Typography.Text>
+            {t('auth.noAccount')} <Link to="/register">{t('auth.register')}</Link>
+          </Typography.Text>
+          {/* Dev server only; stripped from production builds. Matches backend seed_demo. */}
+          {import.meta.env.DEV && (
+            <Typography.Paragraph type="secondary" className="!mb-0 !mt-3 text-xs">
+              {t('auth.demoHint', { username: 'demo', password: 'taskflow-demo-123' })}
+            </Typography.Paragraph>
+          )}
+        </>
       }
     >
       {notice && !error && <Alert className="mb-4" type={notice.type} title={notice.text} showIcon />}

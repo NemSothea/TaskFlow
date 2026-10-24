@@ -9,7 +9,8 @@ afterEach(() => cleanup())
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
-    matches: false,
+    // Reduced motion on: animated values (count-ups, rings) render their final state at once.
+    matches: query.includes('prefers-reduced-motion'),
     media: query,
     onchange: null,
     addListener: () => {},

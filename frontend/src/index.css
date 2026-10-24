@@ -23,6 +23,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Login/register backdrop: a soft brand glow over a faint dot grid. Colors come
+ * from Ant Design tokens (set inline by AuthLayout) so both themes stay in sync.
+ */
+.auth-backdrop {
+  background:
+    radial-gradient(60rem 30rem at 50% -10%, var(--auth-glow), transparent 70%),
+    radial-gradient(circle, var(--auth-dot) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--app-bg);
+}
+
 /* Khmer script needs extra vertical room for stacked vowels and subscripts. */
 :lang(km) body {
   line-height: 1.75;

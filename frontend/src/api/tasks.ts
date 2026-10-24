@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Paginated, Task, TaskInput, TaskQuery, TaskSummary } from './types'
+import type { Paginated, Task, TaskInput, TaskQuery, TaskStats, TaskSummary } from './types'
 
 export async function listTasks(query: TaskQuery, signal?: AbortSignal) {
   const { data } = await api.get<Paginated<Task>>('/tasks/', { params: query, signal })
@@ -8,6 +8,11 @@ export async function listTasks(query: TaskQuery, signal?: AbortSignal) {
 
 export async function getTaskSummary(signal?: AbortSignal) {
   const { data } = await api.get<TaskSummary>('/tasks/summary/', { signal })
+  return data
+}
+
+export async function getTaskStats(signal?: AbortSignal) {
+  const { data } = await api.get<TaskStats>('/tasks/stats/', { signal })
   return data
 }
 

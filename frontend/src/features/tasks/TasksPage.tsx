@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { App, Button, Empty, Pagination, Typography } from 'antd'
+import { App, Button, Empty, Pagination } from 'antd'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
@@ -9,10 +9,12 @@ import * as tasksApi from '../../api/tasks'
 import type { Task, TaskInput, TaskQuery } from '../../api/types'
 import { ErrorState } from '../../components/ErrorState'
 import { hasActiveFilters, PAGE_SIZE, paramsFromQuery, queryFromParams } from './query'
+import { TaskCharts } from './charts/TaskCharts'
 import { TaskFilters } from './TaskFilters'
 import { TaskFormModal } from './TaskFormModal'
 import { TaskList } from './TaskList'
 import { TaskSummaryCards } from './TaskSummaryCards'
+import { TasksHero } from './TasksHero'
 import { useAsync } from './useAsync'
 
 type ModalState = { open: false } | { open: true; task: Task | null }
@@ -23,12 +25,14 @@ export function TasksPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = useMemo(() => queryFromParams(searchParams), [searchParams])
   const [modal, setModal] = useState<ModalState>({ open: false })
+  const [celebrate, setCelebrate] = useState(0)
 
   const list = useAsync(
     (signal) => tasksApi.listTasks({ ...query, page_size: PAGE_SIZE }, signal),
     [query],
   )
   const summary = useAsync((signal) => tasksApi.getTaskSummary(signal), [])
+  const stats = useAsync((signal) => tasksApi.getTaskStats(signal), [])
 
   const updateQuery = useCallback(
     (patch: Partial<TaskQuery>) => {
@@ -41,6 +45,7 @@ export function TasksPage() {
   const refreshAll = () => {
     list.reload()
     summary.reload()
+    stats.reload()
   }
 
   const showMutationError = (err: unknown) => {
@@ -69,6 +74,7 @@ export function TasksPage() {
       if (list.data?.results.length === 1 && query.page > 1) {
         updateQuery({ page: query.page - 1 })
         summary.reload()
+        stats.reload()
       } else {
         refreshAll()
       }
@@ -81,6 +87,7 @@ export function TasksPage() {
     try {
       await tasksApi.updateTask(task.id, { status: 'done' })
       void message.success(t('tasks.updated'))
+      setCelebrate((n) => n + 1)
       refreshAll()
     } catch (err) {
       showMutationError(err)
@@ -140,16 +147,24 @@ export function TasksPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Typography.Title level={1} className="!m-0 !text-2xl">
-          {t('tasks.heading')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModal({ open: true, task: null })}>
-          {t('tasks.newTask')}
-        </Button>
-      </div>
+      <TasksHero
+        summary={summary.data}
+        onNewTask={() => setModal({ open: true, task: null })}
+        celebrate={celebrate}
+      />
 
-      <TaskSummaryCards summary={summary.data} />
+      <TaskSummaryCards
+        summary={summary.data}
+        activeStatus={query.status}
+        onSelect={(status) => updateQuery({ status })}
+      />
+      <TaskCharts
+        summary={summary.data}
+        stats={stats.data}
+        loading={stats.loading}
+        failed={stats.error !== null}
+        onRetry={stats.reload}
+      />
       <TaskFilters query={query} onChange={updateQuery} />
       <section aria-busy={list.loading} aria-label={t('tasks.heading')}>
         {body}

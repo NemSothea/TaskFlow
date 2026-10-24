@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import type MockAdapter from 'axios-mock-adapter'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import type { Paginated, Task, TaskSummary } from '../../api/types'
+import type { Paginated, Task, TaskStats, TaskSummary } from '../../api/types'
+import { AuthContext, type AuthContextValue } from '../auth/context'
 import { expectNoA11yViolations } from '../../test/axe'
 import { mockApi } from '../../test/http'
 import { LocationProbe } from '../../test/LocationProbe'
@@ -30,12 +31,35 @@ function page(results: Task[], count = results.length): Paginated<Task> {
 
 const SUMMARY: TaskSummary = { todo: 4, in_progress: 2, done: 1, total: 7 }
 
+const STATS: TaskStats = {
+  by_priority: [
+    { priority: 'high', todo: 2, in_progress: 1, done: 0 },
+    { priority: 'medium', todo: 1, in_progress: 1, done: 1 },
+    { priority: 'low', todo: 1, in_progress: 0, done: 0 },
+  ],
+  created_per_week: ['08-31', '09-07', '09-14', '09-21', '09-28', '10-05', '10-12', '10-19'].map((day, i) => ({
+    week_start: `2026-${day}`,
+    count: i,
+  })),
+  overdue: 2,
+  due_this_week: 5,
+}
+
+const signedIn: AuthContextValue = {
+  status: 'authenticated',
+  user: { id: 1, username: 'demo', email: 'demo@example.com' },
+  sessionExpired: false,
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+}
+
 function renderPage(route = '/') {
   return renderWithProviders(
-    <>
+    <AuthContext.Provider value={signedIn}>
       <TasksPage />
       <LocationProbe />
-    </>,
+    </AuthContext.Provider>,
     { route },
   )
 }
@@ -59,6 +83,7 @@ let mock: MockAdapter
 beforeEach(() => {
   mock = mockApi()
   mock.onGet('/tasks/summary/').reply(200, SUMMARY)
+  mock.onGet('/tasks/stats/').reply(200, STATS)
 })
 
 afterEach(() => mock.restore())
@@ -71,7 +96,7 @@ describe('TasksPage', () => {
 
       expect(await screen.findByText('Buy milk')).toBeInTheDocument()
       expect(screen.getByText('Pay rent')).toBeInTheDocument()
-      expect(await screen.findByText('7')).toBeInTheDocument()
+      expect(await screen.findByRole('button', { name: /^Total/ })).toHaveTextContent('7')
       expect(screen.getByRole('heading', { name: 'My tasks' })).toBeInTheDocument()
       await expectNoA11yViolations(container)
     })
@@ -91,6 +116,103 @@ describe('TasksPage', () => {
       await screen.findByText('Buy milk')
       expect(lastListParams()).toMatchObject({ page: 1 })
       expect(lastListParams().status).toBeUndefined()
+    })
+  })
+
+  describe('charts', () => {
+    it('shows status, priority and weekly data, each with a table twin', async () => {
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      const { container } = renderPage()
+
+      const priority = await screen.findByRole('table', { name: 'Priority by status' })
+      const high = within(priority).getByRole('row', { name: /High/ })
+      expect(within(high).getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['2', '1', '0'])
+
+      const status = screen.getByRole('table', { name: 'Status breakdown' })
+      expect(within(status).getByRole('row', { name: /To do/ })).toHaveTextContent('457%')
+
+      const weekly = screen.getByRole('table', { name: 'New tasks per week' })
+      expect(within(weekly).getAllByRole('row')).toHaveLength(9) // header + 8 weeks
+      await expectNoA11yViolations(container)
+    })
+
+    it('shows overdue and due-this-week counts', async () => {
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      renderPage()
+
+      expect((await screen.findByText('Due this week')).parentElement).toHaveTextContent('5')
+      expect(screen.getByText('Overdue').parentElement).toHaveTextContent('2')
+    })
+
+    it('offers a retry when the chart data fails to load', async () => {
+      const user = userEvent.setup()
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      mock.onGet('/tasks/stats/').reply(500)
+      renderPage()
+
+      expect(await screen.findByText('Could not load charts.')).toBeInTheDocument()
+      mock.onGet('/tasks/stats/').reply(200, STATS)
+      await user.click(screen.getByRole('button', { name: 'Retry' }))
+      expect(await screen.findByRole('table', { name: 'Priority by status' })).toBeInTheDocument()
+    })
+  })
+
+  describe('summary cards', () => {
+    it('shows the share of tasks that are done', async () => {
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      renderPage()
+
+      // 1 of 7 done.
+      expect(await screen.findByRole('progressbar', { name: '14% done' })).toHaveAttribute('aria-valuenow', '14')
+    })
+
+    it('greets the user and counts the tasks still open', async () => {
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      renderPage()
+
+      expect(await screen.findByText(/^Good (morning|afternoon|evening), demo$/)).toBeInTheDocument()
+      // 7 total, 1 done.
+      expect(screen.getByText('Open tasks: 6')).toBeInTheDocument()
+    })
+
+    it('congratulates the user when every task is done', async () => {
+      mock.onGet('/tasks/summary/').reply(200, { todo: 0, in_progress: 0, done: 3, total: 3 })
+      mock.onGet('/tasks/').reply(200, page([makeTask({ status: 'done' })]))
+      renderPage()
+
+      expect(await screen.findByText('All caught up. Nice work!')).toBeInTheDocument()
+    })
+
+    it('filters the list by status and toggles back off', async () => {
+      const user = userEvent.setup()
+      mock.onGet('/tasks/').reply(200, page([makeTask()]))
+      renderPage()
+
+      const inProgress = await screen.findByRole('button', { name: /In progress/ })
+      await waitFor(() => expect(inProgress).toBeEnabled())
+      await user.click(inProgress)
+
+      expect(location()).toHaveTextContent('status=in_progress')
+      await waitFor(() => expect(lastListParams()).toMatchObject({ status: 'in_progress', page: 1 }))
+      expect(inProgress).toHaveAttribute('aria-pressed', 'true')
+
+      await user.click(inProgress)
+      expect(location()).not.toHaveTextContent('status=')
+      expect(inProgress).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('marks Total as active when no status filter is set', async () => {
+      const user = userEvent.setup()
+      mock.onGet('/tasks/').reply(200, page([makeTask({ status: 'done' })]))
+      renderPage('/?status=done&page=2')
+
+      const total = await screen.findByRole('button', { name: /Total/ })
+      await waitFor(() => expect(total).toBeEnabled())
+      expect(total).toHaveAttribute('aria-pressed', 'false')
+
+      await user.click(total)
+      expect(location()).not.toHaveTextContent('status=')
+      expect(total).toHaveAttribute('aria-pressed', 'true')
     })
   })
 

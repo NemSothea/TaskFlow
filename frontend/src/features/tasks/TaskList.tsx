@@ -1,8 +1,11 @@
 import { Card, Grid, Spin, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import { useTranslation } from 'react-i18next'
 
 import type { Task } from '../../api/types'
+import { transitions } from '../../lib/motion'
 import { TaskActions } from './TaskActions'
 import { DueDate, PriorityTag, StatusTag } from './TaskMeta'
 
@@ -23,29 +26,39 @@ export function TaskList({ tasks, loading, ...actions }: Props) {
   if (screens.md === false) {
     return (
       <Spin spinning={loading}>
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {tasks.map((task) => (
-            <li key={task.id}>
-              <Card size="small">
-                <div className="flex items-start justify-between gap-2">
-                  <Typography.Text strong delete={task.status === 'done'} className="break-words">
-                    {task.title}
-                  </Typography.Text>
-                  <TaskActions task={task} {...actions} />
-                </div>
-                {task.description && (
-                  <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }} className="!mb-2 !mt-1">
-                    {task.description}
-                  </Typography.Paragraph>
-                )}
-                <div className="flex flex-wrap items-center gap-y-1">
-                  <StatusTag status={task.status} />
-                  <PriorityTag priority={task.priority} />
-                  <DueDate task={task} />
-                </div>
-              </Card>
-            </li>
-          ))}
+        <ul className="relative m-0 flex list-none flex-col gap-3 p-0">
+          {/* initial={false}: no entrance on first paint; only added/removed cards animate. */}
+          <AnimatePresence initial={false} mode="popLayout">
+            {tasks.map((task) => (
+              <m.li
+                key={task.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={transitions.layout}
+              >
+                <Card size="small">
+                  <div className="flex items-start justify-between gap-2">
+                    <Typography.Text strong delete={task.status === 'done'} className="break-words">
+                      {task.title}
+                    </Typography.Text>
+                    <TaskActions task={task} {...actions} />
+                  </div>
+                  {task.description && (
+                    <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }} className="!mb-2 !mt-1">
+                      {task.description}
+                    </Typography.Paragraph>
+                  )}
+                  <div className="flex flex-wrap items-center gap-y-1">
+                    <StatusTag status={task.status} />
+                    <PriorityTag priority={task.priority} />
+                    <DueDate task={task} />
+                  </div>
+                </Card>
+              </m.li>
+            ))}
+          </AnimatePresence>
         </ul>
       </Spin>
     )

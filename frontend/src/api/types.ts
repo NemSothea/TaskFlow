@@ -52,6 +52,18 @@ export interface Paginated<T> {
 
 export type TaskSummary = Record<TaskStatus, number> & { total: number }
 
+/** GET /tasks/stats/ - chart data for the dashboard. */
+export interface TaskStats {
+  /** Ordered high -> low. */
+  by_priority: (Record<TaskStatus, number> & { priority: TaskPriority })[]
+  /** The last 8 weeks, oldest first; `week_start` is a Monday (YYYY-MM-DD). */
+  created_per_week: { week_start: string; count: number }[]
+  /** Open (not done) tasks past their due date. */
+  overdue: number
+  /** Open tasks due from today through Sunday. */
+  due_this_week: number
+}
+
 export interface LoginInput {
   username: string
   password: string

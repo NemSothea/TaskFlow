@@ -1,3 +1,4 @@
+import '@fontsource-variable/plus-jakarta-sans/wght.css'
 import '@fontsource/noto-sans-khmer/400.css'
 import '@fontsource/noto-sans-khmer/600.css'
 import './index.css'
