@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,8 +28,22 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
+PLACEHOLDER_SECRET_KEYS = {"change-me"}
+
+
+def require_strong_secret_key(key: str) -> str:
+    """Refuse empty, placeholder or short keys so a copied .env.example cannot run."""
+    if key in PLACEHOLDER_SECRET_KEYS or len(key) < 32:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY is missing, a placeholder, or shorter than 32 characters. "
+            'Generate one with: uv run python -c "from django.core.management.utils '
+            'import get_random_secret_key as g; print(g())"'
+        )
+    return key
+
+
 # SECRET_KEY has no default on purpose: the app must not start with a guessable key.
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = require_strong_secret_key(env("DJANGO_SECRET_KEY"))
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
