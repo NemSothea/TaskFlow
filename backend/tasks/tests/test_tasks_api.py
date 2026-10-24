@@ -1,5 +1,8 @@
+from datetime import UTC, datetime, time, timedelta
+
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from tasks.models import Task
 
@@ -95,6 +98,79 @@ class TestOwnershipIsolation:
         Task.objects.create(owner=user, title="a", status="done")
         res = client.get(reverse("task-summary"))
         assert res.data == {"todo": 0, "in_progress": 0, "done": 1, "total": 1}
+
+
+class TestStats:
+    URL = reverse("task-stats")
+
+    def test_requires_authentication(self, api_client):
+        assert api_client.get(self.URL).status_code == 401
+
+    def test_empty_account_has_zero_filled_shape(self, alice):
+        client, _ = alice
+        res = client.get(self.URL)
+        assert res.status_code == 200
+        assert [row["priority"] for row in res.data["by_priority"]] == ["high", "medium", "low"]
+        for row in res.data["by_priority"]:
+            assert row["todo"] == row["in_progress"] == row["done"] == 0
+        weeks = res.data["created_per_week"]
+        assert len(weeks) == 8
+        assert all(week["count"] == 0 for week in weeks)
+        assert res.data["overdue"] == 0
+        assert res.data["due_this_week"] == 0
+
+    def test_counts_status_per_priority(self, alice):
+        client, user = alice
+        Task.objects.create(owner=user, title="a", priority="high", status="todo")
+        Task.objects.create(owner=user, title="b", priority="high", status="done")
+        Task.objects.create(owner=user, title="c", priority="low", status="in_progress")
+        rows = {row["priority"]: row for row in client.get(self.URL).data["by_priority"]}
+        assert rows["high"] == {"priority": "high", "todo": 1, "in_progress": 0, "done": 1}
+        assert rows["medium"] == {"priority": "medium", "todo": 0, "in_progress": 0, "done": 0}
+        assert rows["low"] == {"priority": "low", "todo": 0, "in_progress": 1, "done": 0}
+
+    def test_buckets_created_tasks_by_monday_week(self, alice):
+        client, user = alice
+        today = timezone.localdate()
+        monday = today - timedelta(days=today.weekday())
+        this_week = Task.objects.create(owner=user, title="now")
+        last_week = Task.objects.create(owner=user, title="last")
+        too_old = Task.objects.create(owner=user, title="old")
+
+        # created_at is auto_now_add; move it with update().
+        def move(task, day):
+            created = datetime.combine(day, time(12, tzinfo=UTC))
+            Task.objects.filter(pk=task.pk).update(created_at=created)
+
+        move(this_week, monday)
+        move(last_week, monday - timedelta(days=1))
+        move(too_old, monday - timedelta(weeks=9))
+
+        weeks = client.get(self.URL).data["created_per_week"]
+        assert weeks[-1] == {"week_start": monday.isoformat(), "count": 1}
+        assert weeks[-2] == {"week_start": (monday - timedelta(weeks=1)).isoformat(), "count": 1}
+        assert sum(week["count"] for week in weeks) == 2
+
+    def test_deadlines_ignore_done_tasks(self, alice):
+        client, user = alice
+        today = timezone.localdate()
+        yesterday = today - timedelta(days=1)
+        Task.objects.create(owner=user, title="late", due_date=yesterday)
+        Task.objects.create(owner=user, title="late but done", status="done", due_date=yesterday)
+        Task.objects.create(owner=user, title="today", due_date=today)
+        data = client.get(self.URL).data
+        assert data["overdue"] == 1
+        assert data["due_this_week"] == 1
+
+    def test_only_counts_own_tasks(self, alice, bob):
+        client, _ = alice
+        _, bob_user = bob
+        Task.objects.create(owner=bob_user, title="Bob's secret", due_date=timezone.localdate())
+        data = client.get(self.URL).data
+        rows = data["by_priority"]
+        assert sum(row["todo"] + row["in_progress"] + row["done"] for row in rows) == 0
+        assert sum(week["count"] for week in data["created_per_week"]) == 0
+        assert data["due_this_week"] == 0
 
 
 class TestListing:
